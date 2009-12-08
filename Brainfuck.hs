@@ -1,17 +1,28 @@
-import System.Environment
+module Brainfuck where
+
 import Array
 import IO
 import Data.Char
 
+--Describes the current state of the interpreter
 data InterpreterState = InterpreterState { 
                           mem    :: Array Int Int
                         , ptr    :: Int
-                        , prog   :: String
                         , inst   :: String
                         , loop   :: [String] 
                         , input  :: Bool
                         , output :: Maybe Char
-                        } deriving (Show)
+                        } deriving (Show, Eq)
+
+initializeInterpreter :: String -> InterpreterState
+initializeInterpreter code = InterpreterState { 
+                          mem = array (1,20000) [(i,0) | i <- [1..20000]]
+                        , ptr = 1000
+                        , inst = code
+                        , loop = []
+                        , input = False
+                        , output = Nothing
+                        }
 
 writeI :: Int -> InterpreterState -> InterpreterState
 writeI val i = i { mem = mem i // [(ptr i, val)] }
@@ -28,12 +39,11 @@ leftLoop i = if readI i == 0
                 else i { loop = (inst i) : loop i}
 
 findRight :: String -> Int -> String
-findRight s i = if head s == ']' && i == 0
-                   then s
-                   else case head s of 
-                            ']' -> findRight (tail s) (i-1)
-                            '[' -> findRight (tail s) (i+1)
-                            _   -> findRight (tail s) i
+findRight (']':xs) 0 = ']':xs
+findRight ('[':xs) i = findRight xs (i+1)
+findRight (']':xs) i = findRight xs (i-1)
+findRight (_:xs) i = findRight xs i
+findRight [] _ = error "missing end of loop"
 
 rightLoop :: InterpreterState -> InterpreterState
 rightLoop i = if readI i /= 0
@@ -67,32 +77,4 @@ handleOut i = case (output i) of
 
 handleIO :: InterpreterState -> IO InterpreterState
 handleIO i = handleIn i >>= handleOut
-
-execute code = do
-        let i = InterpreterState { 
-                    mem = array (1,10000) [(i,0) | i <- [1..10000]]
-                    , ptr = 1000
-                    , prog = code
-                    , inst = code
-                    , loop = []
-                    , input = False
-                    , output = Nothing
-                    }
-        run i
-
-run i = do
-     let newi = interpret i
-     newi <- handleIO newi
-     if null (tail (inst newi))
-        then return ()
-        else run $ newi { inst = tail (inst newi) }
-
-
-
-main = do
-    filename <- getArgs
-    file <- openFile (head filename) ReadMode
-    code <- (hGetContents file)
-    hSetBuffering stdin NoBuffering
-    execute code
 
