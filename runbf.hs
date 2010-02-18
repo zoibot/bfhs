@@ -16,7 +16,6 @@ run i = do
         else run $ newi { inst = tail (inst newi) }
 
 
-
 main = do
     filename <- getArgs
     file <- openFile (head filename) ReadMode

@@ -14,6 +14,7 @@ data InterpreterState = InterpreterState {
                         , output :: Maybe Char
                         } deriving (Show, Eq)
 
+--Create a new interpreter state from string of bf code
 initializeInterpreter :: String -> InterpreterState
 initializeInterpreter code = InterpreterState { 
                           mem = array (1,20000) [(i,0) | i <- [1..20000]]
@@ -24,6 +25,7 @@ initializeInterpreter code = InterpreterState {
                         , output = Nothing
                         }
 
+--Utility functions for manipulating interpreter states
 writeI :: Int -> InterpreterState -> InterpreterState
 writeI val i = i { mem = mem i // [(ptr i, val)] }
 
